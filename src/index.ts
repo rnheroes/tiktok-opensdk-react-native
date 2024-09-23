@@ -17,14 +17,14 @@ const TiktokOpensdkReactNative = NativeModules.TiktokOpensdkReactNative
       }
     );
 
-export interface LoginResult {
+export interface TikTokOpenSDKLoginResult {
   authCode: string;
   grantedPermissions: string[];
   authError?: string;
   authErrorDescription?: string;
 }
 
-export interface ShareResult {
+export interface TikTokOpenSDKShareResult {
   isSuccess: boolean;
   errorCode: number;
   subErrorCode: number;
@@ -32,30 +32,36 @@ export interface ShareResult {
 }
 
 export interface TikTokSDKType {
-  login: (clientKey: string, redirectUri: string) => Promise<LoginResult>;
+  login: (
+    clientKey: string,
+    redirectUri: string
+  ) => Promise<TikTokOpenSDKLoginResult>;
   handleLoginResult: (
     intentUri: string,
     redirectUri: string
-  ) => Promise<LoginResult>;
+  ) => Promise<TikTokOpenSDKLoginResult>;
   share: (
     clientKey: string,
     mediaUrls: string[],
     isImage: boolean,
     isGreenScreen: boolean
   ) => Promise<void>;
-  handleShareResult: (intentUri: string) => Promise<ShareResult>;
+  handleShareResult: (intentUri: string) => Promise<TikTokOpenSDKShareResult>;
   grantUriPermission: (uri: string) => Promise<void>;
 }
 
-const TikTokSDK: TikTokSDKType = {
-  login: (clientKey: string, redirectUri: string): Promise<LoginResult> => {
+const TikTokOpenSDK: TikTokSDKType = {
+  login: (
+    clientKey: string,
+    redirectUri: string
+  ): Promise<TikTokOpenSDKLoginResult> => {
     return TiktokOpensdkReactNative.login(clientKey, redirectUri);
   },
 
   handleLoginResult: (
     intentUri: string,
     redirectUri: string
-  ): Promise<LoginResult> => {
+  ): Promise<TikTokOpenSDKLoginResult> => {
     if (Platform.OS === 'android') {
       return TiktokOpensdkReactNative.handleLoginResult(intentUri, redirectUri);
     }
@@ -76,7 +82,7 @@ const TikTokSDK: TikTokSDKType = {
     );
   },
 
-  handleShareResult: (intentUri: string): Promise<ShareResult> => {
+  handleShareResult: (intentUri: string): Promise<TikTokOpenSDKShareResult> => {
     if (Platform.OS === 'android') {
       return TiktokOpensdkReactNative.handleShareResult(intentUri);
     }
@@ -91,4 +97,4 @@ const TikTokSDK: TikTokSDKType = {
   },
 };
 
-export default TikTokSDK;
+export default TikTokOpenSDK;
