@@ -51,14 +51,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/enestatli/tiktok-opensdk-react-native.git"
+    "url": "git+https://github.com/rnheroes/tiktok-opensdk-react-native.git"
   },
-  "author": "enestatli <eenestatli@gmail.com> (https://github.com/enestatli)",
+  "author": "React Native Heroes <eenestatli@gmail.com> (https://github.com/rnheroes)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/enestatli/tiktok-opensdk-react-native/issues"
+    "url": "https://github.com/rnheroes/tiktok-opensdk-react-native/issues"
   },
-  "homepage": "https://github.com/enestatli/tiktok-opensdk-react-native#readme",
+  "homepage": "https://github.com/rnheroes/tiktok-opensdk-react-native#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },

@@ -16,7 +16,62 @@ const TiktokOpensdkReactNative = NativeModules.TiktokOpensdkReactNative
         },
       }
     );
-
-export function multiply(a: number, b: number): Promise<number> {
-  return TiktokOpensdkReactNative.multiply(a, b);
+interface LoginResult {
+  authCode: string;
+  grantedPermissions: string[];
+  authError?: string;
+  authErrorDescription?: string;
 }
+
+interface ShareResult {
+  isSuccess: boolean;
+  errorCode: number;
+  subErrorCode: number;
+  errorMsg: string;
+}
+
+const TikTokSDK = {
+  login: (clientKey: string, redirectUri: string): Promise<LoginResult> => {
+    return TiktokOpensdkReactNative.login(clientKey, redirectUri);
+  },
+
+  handleLoginResult: (
+    intentUri: string,
+    redirectUri: string
+  ): Promise<LoginResult> => {
+    if (Platform.OS === 'android') {
+      return TiktokOpensdkReactNative.handleLoginResult(intentUri, redirectUri);
+    }
+    return Promise.reject('Not implemented for this platform');
+  },
+
+  share: (
+    clientKey: string,
+    mediaUrls: string[],
+    isImage: boolean,
+    isGreenScreen: boolean
+  ): Promise<void> => {
+    return TiktokOpensdkReactNative.share(
+      clientKey,
+      mediaUrls,
+      isImage,
+      isGreenScreen
+    );
+  },
+
+  handleShareResult: (intentUri: string): Promise<ShareResult> => {
+    if (Platform.OS === 'android') {
+      return TiktokOpensdkReactNative.handleShareResult(intentUri);
+    }
+    return Promise.reject('Not implemented for this platform');
+  },
+
+  grantUriPermission: (uri: string): Promise<void> => {
+    if (Platform.OS === 'android') {
+      return TiktokOpensdkReactNative.grantUriPermission(uri);
+    }
+    return Promise.reject('Not implemented for this platform');
+  },
+};
+
+export default TikTokSDK;
