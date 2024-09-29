@@ -1,47 +1,22 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-  xmlns:tools="http://schemas.android.com/tools"
-  package="com.tiktokopensdkreactnative">
-  
-  <application>
-    <activity
-        android:name="com.tiktok.open.sdk.auth.AuthActivity"
-        android:configChanges="orientation|keyboardHidden|screenSize"
-        android:exported="false"
-        android:launchMode="singleTask"
-        android:screenOrientation="portrait"
-        android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+    package="com.tiktokopensdkreactnative">
 
-    <activity
-        android:name="com.tiktok.open.sdk.share.ShareActivity"
-        android:configChanges="orientation|keyboardHidden|screenSize"
-        android:exported="false"
-        android:launchMode="singleTask"
-        android:screenOrientation="portrait"
-        android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-    <activity
-        android:name=".MainActivity"
-        android:exported="true"
-        android:launchMode="singleTask">
-        <intent-filter>
-            <action android:name="android.intent.action.VIEW" />
-            <category android:name="android.intent.category.DEFAULT" />
-            <category android:name="android.intent.category.BROWSABLE" />
-            <data
-                android:host="${applicationId}"
-                android:scheme="tiktok${applicationId}" />
-        </intent-filter>
-    </activity>
-    <provider
-      android:name="androidx.core.content.FileProvider"
-      android:authorities="${applicationId}.fileprovider"
-      android:exported="false"
-      tools:replace="android:authorities"
-      android:grantUriPermissions="true">
-      <meta-data
-        tools:replace="android:resource"
-        android:name="android.support.FILE_PROVIDER_PATHS"
-        android:resource="@xml/file_provider_paths" />
-    </provider>
-  </application>
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application>
+        <activity
+            android:name="com.tiktok.open.sdk.share.ShareActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="ttopensdk" />
+            </intent-filter>
+        </activity>
+    </application>
 
 </manifest>
