@@ -121,20 +121,57 @@ class TiktokOpensdkReactNativeModule(reactContext: ReactApplicationContext) :
 
     override fun onActivityResult(activity: Activity, requestCode: Int, resultCode: Int, data: Intent?) {
         Log.d("TikTokSDK", "onActivityResult called: requestCode=$requestCode, resultCode=$resultCode")
+        Log.d("TikTokSDK", "Intent data: ${data?.toString()}")
+        Log.d("TikTokSDK", "Intent extras: ${data?.extras}")
         
+        // We'll handle the response in onNewIntent, so we don't need to do anything here
+        // Just cancel the timeout
+        handler.removeCallbacksAndMessages(null)
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        Log.d("TikTokSDK", "onNewIntent called")
+        Log.d("TikTokSDK", "Intent data: ${intent?.toString()}")
+        Log.d("TikTokSDK", "Intent extras: ${intent?.extras}")
+
         if (!isShareInProgress) {
-            Log.d("TikTokSDK", "No share in progress, ignoring activity result")
+            Log.d("TikTokSDK", "No share in progress, ignoring new intent")
             return
         }
 
         isShareInProgress = false
-        handler.removeCallbacksAndMessages(null)
 
+        try {
+            val response = shareApi.getShareResponseFromIntent(intent)
+            if (response != null) {
+                Log.d("TikTokSDK", "Share response in onNewIntent: isSuccess=${response.isSuccess}, errorCode=${response.errorCode}, errorMsg=${response.errorMsg}")
+                val result = Arguments.createMap().apply {
+                    putBoolean("isSuccess", response.isSuccess)
+                    putInt("errorCode", response.errorCode ?: 0)
+                    putString("errorMsg", response.errorMsg)
+                }
+                sharePromise?.resolve(result)
+            } else {
+                Log.e("TikTokSDK", "Failed to get share response from intent in onNewIntent")
+                sharePromise?.reject("ERROR", "Failed to get share response")
+            }
+        } catch (e: Exception) {
+            Log.e("TikTokSDK", "Exception in onNewIntent", e)
+            sharePromise?.reject("ERROR", "Exception in onNewIntent: ${e.message}")
+        } finally {
+            sharePromise = null
+        }
+    }
+
+    private fun processShareResult(data: Intent?) {
+        isShareInProgress = false
+        handler.removeCallbacksAndMessages(null)
+    
         if (sharePromise == null) {
-            Log.e("TikTokSDK", "sharePromise is null in onActivityResult")
+            Log.e("TikTokSDK", "sharePromise is null in processShareResult")
             return
         }
-
+    
         try {
             val response = shareApi.getShareResponseFromIntent(data)
             if (response != null) {
@@ -150,14 +187,10 @@ class TiktokOpensdkReactNativeModule(reactContext: ReactApplicationContext) :
                 sharePromise?.reject("ERROR", "Failed to get share response")
             }
         } catch (e: Exception) {
-            Log.e("TikTokSDK", "Exception in onActivityResult", e)
-            sharePromise?.reject("ERROR", "Exception in onActivityResult: ${e.message}")
+            Log.e("TikTokSDK", "Exception in processShareResult", e)
+            sharePromise?.reject("ERROR", "Exception in processShareResult: ${e.message}")
         } finally {
             sharePromise = null
         }
-    }
-
-    override fun onNewIntent(intent: Intent?) {
-        Log.d("TikTokSDK", "onNewIntent called")
     }
 }

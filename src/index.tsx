@@ -17,83 +17,46 @@ const TiktokOpensdkReactNative = NativeModules.TiktokOpensdkReactNative
       }
     );
 
-export interface TikTokOpenSDKLoginResult {
-  authCode: string;
-  grantedPermissions: string[];
-  authError?: string;
-  authErrorDescription?: string;
-}
-
-export interface TikTokOpenSDKShareResult {
+interface ShareResult {
   isSuccess: boolean;
   errorCode: number;
-  subErrorCode: number;
   errorMsg: string;
 }
 
-export interface TikTokSDKType {
-  login: (
-    clientKey: string,
-    redirectUri: string
-  ) => Promise<TikTokOpenSDKLoginResult>;
-  handleLoginResult: (
-    intentUri: string,
-    redirectUri: string
-  ) => Promise<TikTokOpenSDKLoginResult>;
+interface TikTokOpenSDKType {
   share: (
     clientKey: string,
     mediaUrls: string[],
     isImage: boolean,
     isGreenScreen: boolean
-  ) => Promise<void>;
-  handleShareResult: (intentUri: string) => Promise<TikTokOpenSDKShareResult>;
-  grantUriPermission: (uri: string) => Promise<void>;
+  ) => Promise<ShareResult>;
 }
 
-const TikTokOpenSDK: TikTokSDKType = {
-  login: (
-    clientKey: string,
-    redirectUri: string
-  ): Promise<TikTokOpenSDKLoginResult> => {
-    return TiktokOpensdkReactNative.login(clientKey, redirectUri);
-  },
-
-  handleLoginResult: (
-    intentUri: string,
-    redirectUri: string
-  ): Promise<TikTokOpenSDKLoginResult> => {
-    if (Platform.OS === 'android') {
-      return TiktokOpensdkReactNative.handleLoginResult(intentUri, redirectUri);
-    }
-    return Promise.reject('Not implemented for this platform');
-  },
-
-  share: (
+const TikTokOpenSDK: TikTokOpenSDKType = {
+  share: async (
     clientKey: string,
     mediaUrls: string[],
     isImage: boolean,
     isGreenScreen: boolean
-  ): Promise<void> => {
-    return TiktokOpensdkReactNative.share(
-      clientKey,
-      mediaUrls,
-      isImage,
-      isGreenScreen
-    );
-  },
-
-  handleShareResult: (intentUri: string): Promise<TikTokOpenSDKShareResult> => {
-    if (Platform.OS === 'android') {
-      return TiktokOpensdkReactNative.handleShareResult(intentUri);
+  ): Promise<ShareResult> => {
+    try {
+      if (Platform.OS === 'android') {
+        const result = await TiktokOpensdkReactNative.share(
+          clientKey,
+          mediaUrls,
+          isImage,
+          isGreenScreen
+        );
+        return result;
+      } else if (Platform.OS === 'ios') {
+        throw new Error('iOS implementation not available yet');
+      } else {
+        throw new Error('Unsupported platform');
+      }
+    } catch (error) {
+      console.error('Error sharing to TikTok:', error);
+      throw error;
     }
-    return Promise.reject('Not implemented for this platform');
-  },
-
-  grantUriPermission: (uri: string): Promise<void> => {
-    if (Platform.OS === 'android') {
-      return TiktokOpensdkReactNative.grantUriPermission(uri);
-    }
-    return Promise.reject('Not implemented for this platform');
   },
 };
 
