@@ -148,6 +148,7 @@ class TiktokOpensdkReactNativeModule(reactContext: ReactApplicationContext) :
                 val result = Arguments.createMap().apply {
                     putBoolean("isSuccess", response.isSuccess)
                     putInt("errorCode", response.errorCode ?: 0)
+                    putInt("subErrorCode", response.errorCode ?: 0)
                     putString("errorMsg", response.errorMsg)
                 }
                 sharePromise?.resolve(result)

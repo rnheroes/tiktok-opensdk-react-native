@@ -17,11 +17,18 @@ const TiktokOpensdkReactNative = NativeModules.TiktokOpensdkReactNative
       }
     );
 
-interface ShareResult {
-  isSuccess: boolean;
+interface ShareSuccessResult {
+  isSuccess: true;
+}
+
+interface ShareErrorResult {
+  isSuccess: false;
   errorCode: number;
+  subErrorCode: number;
   errorMsg: string;
 }
+
+type ShareResult = ShareSuccessResult | ShareErrorResult;
 
 interface TikTokOpenSDKType {
   share: (
@@ -47,8 +54,18 @@ const TikTokOpenSDK: TikTokOpenSDKType = {
           isImage,
           isGreenScreen
         );
-        return result;
+        if (result.isSuccess) {
+          return { isSuccess: true };
+        } else {
+          return {
+            isSuccess: false,
+            errorCode: result.errorCode,
+            subErrorCode: result.subErrorCode,
+            errorMsg: result.errorMsg,
+          };
+        }
       } else if (Platform.OS === 'ios') {
+        // iOS implementation
         throw new Error('iOS implementation not available yet');
       } else {
         throw new Error('Unsupported platform');
