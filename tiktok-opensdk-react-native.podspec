@@ -16,18 +16,25 @@ Pod::Spec.new do |s|
 
   s.source_files = "ios/**/*.{h,m,mm,swift}"
 
-  # Use install_modules_dependencies helper to install the dependencies if React Native version >=0.71.0.
-  # See https://github.com/facebook/react-native/blob/febf6b7f33fdb4904669f99d795eba4c0f95d7bf/scripts/cocoapods/new_architecture.rb#L79.
+  # Add these lines to specify where to find the TikTok SDK files
+  s.vendored_frameworks = "ios/TikTokOpenSDK/*.framework"
+  s.resource = "ios/TikTokOpenSDK/*.bundle"
+
+  # Add this to ensure the SDK headers are found
+  s.xcconfig = { "HEADER_SEARCH_PATHS" => "$(PODS_ROOT)/TikTokOpenSDKCore" }
+
+  s.dependency "React-Core"
+  s.dependency "TikTokOpenSDKCore"
+  s.dependency "TikTokOpenAuthSDK"
+  s.dependency "TikTokOpenShareSDK"
+
   if respond_to?(:install_modules_dependencies, true)
     install_modules_dependencies(s)
   else
-    s.dependency "React-Core"
-
-    # Don't install the dependencies when we run `pod install` in the old architecture.
     if ENV['RCT_NEW_ARCH_ENABLED'] == '1' then
       s.compiler_flags = folly_compiler_flags + " -DRCT_NEW_ARCH_ENABLED=1"
       s.pod_target_xcconfig    = {
-          "HEADER_SEARCH_PATHS" => "\"$(PODS_ROOT)/boost\"",
+          "HEADER_SEARCH_PATHS" => "\"$(PODS_ROOT)/boost\" \"$(PODS_ROOT)/TikTokOpenSDKCore\"",
           "OTHER_CPLUSPLUSFLAGS" => "-DFOLLY_NO_CONFIG -DFOLLY_MOBILE=1 -DFOLLY_USE_LIBCPP=1",
           "CLANG_CXX_LANGUAGE_STANDARD" => "c++17"
       }
@@ -36,9 +43,6 @@ Pod::Spec.new do |s|
       s.dependency "RCTRequired"
       s.dependency "RCTTypeSafety"
       s.dependency "ReactCommon/turbomodule/core"
-      s.dependency "TikTokOpenSDKCore"
-      s.dependency "TikTokOpenAuthSDK"
-      s.dependency "TikTokOpenShareSDK"
     end
   end
 end
