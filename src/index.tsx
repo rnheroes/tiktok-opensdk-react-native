@@ -65,8 +65,13 @@ const TikTokOpenSDK: TikTokOpenSDKType = {
           };
         }
       } else if (Platform.OS === 'ios') {
-        // iOS implementation
-        throw new Error('iOS implementation not available yet');
+        const result = await TiktokOpensdkReactNative.share(
+          clientKey,
+          mediaUrls,
+          isImage,
+          isGreenScreen
+        );
+        return result;
       } else {
         throw new Error('Unsupported platform');
       }

@@ -1,15 +1,11 @@
 #import <React/RCTBridgeModule.h>
 
-@interface RCT_EXTERN_MODULE(TikTokSDKWrapper, NSObject)
+@interface RCT_EXTERN_MODULE(TiktokOpensdkReactNative, NSObject)
 
-RCT_EXTERN_METHOD(login:(NSArray *)scopes
-                  redirectURI:(NSString *)redirectURI
-                  resolver:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject)
-
-RCT_EXTERN_METHOD(share:(NSArray *)localIdentifiers
-                  mediaType:(NSString *)mediaType
-                  redirectURI:(NSString *)redirectURI
+RCT_EXTERN_METHOD(share:(NSString *)clientKey
+                  mediaUrls:(NSArray *)mediaUrls
+                  isImage:(BOOL)isImage
+                  isGreenScreen:(BOOL)isGreenScreen
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
