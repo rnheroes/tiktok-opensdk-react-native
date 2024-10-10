@@ -12,7 +12,7 @@ class TiktokOpensdkReactNative: NSObject {
     @objc(share:mediaUrls:isImage:isGreenScreen:resolver:rejecter:)
     func share(_ clientKey: String, mediaUrls: [String], isImage: Bool, isGreenScreen: Bool, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
         // Set up the share request
-        let mediaType: TikTokMediaType = isImage ? .image : .video
+        let mediaType: TikTokShareMediaType = isImage ? .image : .video
         let shareRequest = TikTokShareRequest(localIdentifiers: mediaUrls, mediaType: mediaType, redirectURI: "your-redirect-uri-here")
         
         // Send the share request
@@ -28,9 +28,15 @@ class TiktokOpensdkReactNative: NSObject {
                 resolver([
                     "isSuccess": false,
                     "errorCode": shareResponse.errorCode.rawValue,
-                    "errorMsg": shareResponse.errorMessage ?? "Unknown error"
+                    "errorMsg": shareResponse.errorDescription ?? "Unknown error"
                 ])
             }
+        }
+    }
+
+    @objc public class TikTokURLHandler: NSObject {
+        @objc public static func handleOpenURL(_ url: URL) -> Bool {
+            return TikTokOpenSDKCore.TikTokURLHandler.handleOpenURL(url)
         }
     }
 }
