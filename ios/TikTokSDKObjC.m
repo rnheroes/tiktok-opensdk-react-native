@@ -7,4 +7,11 @@
     return [TikTokURLHandler handleOpenURL:url];
 }
 
++ (BOOL)handleUserActivity:(NSUserActivity *)userActivity {
+    if ([userActivity.activityType isEqualToString:NSUserActivityTypeBrowsingWeb] && userActivity.webpageURL) {
+        return [TikTokURLHandler handleOpenURL:userActivity.webpageURL];
+    }
+    return NO;
+}
+
 @end
