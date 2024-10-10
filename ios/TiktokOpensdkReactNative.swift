@@ -3,7 +3,7 @@ import TikTokOpenSDKCore
 import TikTokOpenShareSDK
 
 @objc(TiktokOpensdkReactNative)
-class TiktokOpensdkReactNative: NSObject {
+public class TiktokOpensdkReactNative: NSObject {
     
     @objc static func requiresMainQueueSetup() -> Bool {
         return false
@@ -28,15 +28,27 @@ class TiktokOpensdkReactNative: NSObject {
                 resolver([
                     "isSuccess": false,
                     "errorCode": shareResponse.errorCode.rawValue,
-                    "errorMsg": shareResponse.errorDescription ?? "Unknown error"
+                    "errorMsg": shareResponse.errorDescription ?? "Unknown error",
+                    "shareState": shareResponse.shareState
                 ])
             }
         }
     }
 
-    @objc public class TikTokURLHandler: NSObject {
-        @objc public static func handleOpenURL(_ url: URL) -> Bool {
+    @objc public static let TikTokURLHandler = TikTokURLHandlerWrapper()
+}
+
+
+@objc public class TikTokURLHandlerWrapper: NSObject {
+    @objc public func handleOpenURL(_ url: URL) -> Bool {
+        return TikTokOpenSDKCore.TikTokURLHandler.handleOpenURL(url)
+    }
+    
+    @objc public func handleUserActivity(_ userActivity: NSUserActivity) -> Bool {
+        if userActivity.activityType == NSUserActivityTypeBrowsingWeb,
+           let url = userActivity.webpageURL {
             return TikTokOpenSDKCore.TikTokURLHandler.handleOpenURL(url)
         }
+        return false
     }
 }

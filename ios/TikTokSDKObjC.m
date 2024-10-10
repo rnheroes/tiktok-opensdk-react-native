@@ -1,17 +1,14 @@
 #import "TikTokSDKObjC.h"
-#import <TiktokOpensdkReactNative-Swift.h>
+#import <tiktok_opensdk_react_native/tiktok_opensdk_react_native-Swift.h>
 
 @implementation TikTokSDKObjC
 
 + (BOOL)handleOpenURL:(NSURL *)url {
-    return [TikTokURLHandler handleOpenURL:url];
+    return [[TiktokOpensdkReactNative TikTokURLHandler] handleOpenURL:url];
 }
 
 + (BOOL)handleUserActivity:(NSUserActivity *)userActivity {
-    if ([userActivity.activityType isEqualToString:NSUserActivityTypeBrowsingWeb] && userActivity.webpageURL) {
-        return [TikTokURLHandler handleOpenURL:userActivity.webpageURL];
-    }
-    return NO;
+    return [[TiktokOpensdkReactNative TikTokURLHandler] handleUserActivity:userActivity];
 }
 
 @end
