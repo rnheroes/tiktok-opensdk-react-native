@@ -1,6 +1,6 @@
 {
   "name": "tiktok-opensdk-react-native",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "tiktok sdk for react-native",
   "source": "./src/index.tsx",
   "main": "./lib/commonjs/index.js",
