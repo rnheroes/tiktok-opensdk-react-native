@@ -173,3 +173,4 @@ MIT
 - [ ] Refactor API to use a single `share` method with an options object
 - [ ] Add support for login and authorization APIs
 - [ ] Send shareShate for error handling in iOS
+- [ ] Add support redirectUri for both platforms

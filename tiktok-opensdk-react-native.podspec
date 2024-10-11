@@ -16,17 +16,15 @@ Pod::Spec.new do |s|
 
   s.source_files = "ios/**/*.{h,m,mm,swift}"
 
-  # Add these lines to specify where to find the TikTok SDK files
   s.vendored_frameworks = "ios/TikTokOpenSDK/*.framework"
   s.resource = "ios/TikTokOpenSDK/*.bundle"
 
-  # Add this to ensure the SDK headers are found
   s.xcconfig = { "HEADER_SEARCH_PATHS" => "$(PODS_ROOT)/TikTokOpenSDKCore" }
 
   s.dependency "React-Core"
-  s.dependency "TikTokOpenSDKCore"
-  s.dependency "TikTokOpenAuthSDK"
-  s.dependency "TikTokOpenShareSDK"
+  s.dependency "TikTokOpenSDKCore", "2.5.0"
+  s.dependency "TikTokOpenAuthSDK", "2.5.0"
+  s.dependency "TikTokOpenShareSDK", "2.5.0"
 
   if respond_to?(:install_modules_dependencies, true)
     install_modules_dependencies(s)

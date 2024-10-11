@@ -24,7 +24,8 @@ interface ShareSuccessResult {
 interface ShareErrorResult {
   isSuccess: false;
   errorCode: number;
-  subErrorCode: number;
+  subErrorCode?: number;
+  shareState?: number;
   errorMsg: string;
 }
 
@@ -71,7 +72,16 @@ const TikTokOpenSDK: TikTokOpenSDKType = {
           isImage,
           isGreenScreen
         );
-        return result;
+        if (result.isSuccess) {
+          return { isSuccess: true };
+        } else {
+          return {
+            isSuccess: false,
+            errorCode: result.errorCode,
+            shareState: result.shareState,
+            errorMsg: result.errorMsg,
+          };
+        }
       } else {
         throw new Error('Unsupported platform');
       }
