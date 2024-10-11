@@ -65,7 +65,8 @@ interface ShareSuccessResult {
 interface ShareErrorResult {
   isSuccess: false;
   errorCode: number;
-  subErrorCode: number;
+  subErrorCode?: number;
+  shareState?: number;
   errorMsg: string;
 }
 ```
