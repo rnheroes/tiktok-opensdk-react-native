@@ -98,7 +98,7 @@ dependencies {
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
   
   implementation 'com.tiktok.open.sdk:tiktok-open-sdk-core:2.3.0'
-  implementation 'com.tiktok.open.sdk:tiktok-open-sdk-auth:2.3.0'
+  // implementation 'com.tiktok.open.sdk:tiktok-open-sdk-auth:2.3.0'
   implementation 'com.tiktok.open.sdk:tiktok-open-sdk-share:2.3.0'
 }
 

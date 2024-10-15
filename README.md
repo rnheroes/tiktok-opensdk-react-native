@@ -19,7 +19,6 @@ import TikTokOpenSDK from 'tiktok-opensdk-react-native';
 
 try {
   const result = await TikTokOpenSDK.share(
-    'YOUR_CLIENT_KEY',
     ['path/to/media1', 'path/to/media2'],
     false, // isImage (true for images, false for videos)
     false  // isGreenScreen
@@ -37,10 +36,9 @@ try {
 
 # API
 
-## `TikTokOpenSDK.share(clientKey: string, mediaPaths: string[], isImage: boolean, isGreenScreen: boolean): Promise<ShareResult>`
+## `TikTokOpenSDK.share(mediaPaths: string[], isImage: boolean, isGreenScreen: boolean): Promise<ShareResult>`
 <!-- Shares media to TikTok.
 
-clientKey: Your TikTok Client Key
 mediaUrls: Array of local media file URLs to share
 isImage: Set to true for images, false for videos
 isGreenScreen: Set to true to use green screen effect (TikTok app only) -->
@@ -48,7 +46,6 @@ Shares media to TikTok.
 
 ### Parameters
 
-- `clientKey: string` - Your TikTok Client Key
 - `mediaPaths: string[]` - Array of local media file paths to share
 - `isImage: boolean` - Set to `true` for images, `false` for videos
 - `isGreenScreen: boolean` - Set to `true` to use green screen effect (TikTok app only)
@@ -100,10 +97,19 @@ Minimum Xcode version: 10.0
 </array>
 ```
 
-3. Update your AppDelegate.m
+3. Add NSPhotoLibraryUsageDescription to your `Info.plist` file:
+
+```xml
+<key>NSPhotoLibraryAddUsageDescription</key>
+<string>$(PRODUCT_NAME) would like to save photos to your photo library</string>
+<key>NSPhotoLibraryUsageDescription</key>
+<string>$(PRODUCT_NAME) would like to access your photo library</string>
+```
+
+4. Update your AppDelegate.m
 
 ```objc
-#import "TikTokSDKObjC.h"
+#import <tiktok_opensdk_react_native/tiktok_opensdk_react_native-Swift.h>
 
 @implementation AppDelegate
 
@@ -111,20 +117,28 @@ Minimum Xcode version: 10.0
 
 - (BOOL)application:(UIApplication *)app openURL:(NSURL *)url options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options
 {
-  if ([TikTokSDKObjC handleOpenURL:url]) {
-    return YES;
+  BOOL handled = NO;
+
+  if ([TiktokOpensdkReactNative handleOpenURL:url]) {
+      handled = YES;
   }
+
   // Handle other custom URL schemes
-  return NO;
+
+  return handled;
 }
 
 - (BOOL)application:(UIApplication *)application continueUserActivity:(nonnull NSUserActivity *)userActivity restorationHandler:(nonnull void (^)(NSArray<id<UIUserActivityRestoring>> * _Nullable))restorationHandler
 {
-  if ([TikTokSDKObjC handleUserActivity:userActivity]) {
-    return YES;
+  BOOL handled = NO;
+
+  if ([TiktokOpensdkReactNative handleUserActivity:userActivity]) {
+      handled = YES;
   }
+
   // Handle other user activities
-  return NO;
+
+  return handled;
 }
 
 @end
@@ -147,7 +161,6 @@ repositories {
 ```gradle
 dependencies {
     implementation 'com.tiktok.open.sdk:tiktok-open-sdk-core:2.3.0'
-    implementation 'com.tiktok.open.sdk:tiktok-open-sdk-auth:2.3.0'   // for authorization API
     implementation 'com.tiktok.open.sdk:tiktok-open-sdk-share:2.3.0'  // for share API
 }
 ```
@@ -159,6 +172,36 @@ dependencies {
     <package android:name="com.zhiliaoapp.musically" />
     <package android:name="com.ss.android.ugc.trill" />
 </queries>
+```
+
+4. Add client key to your strings.xml file:
+
+```xml
+<string name="tiktok_client_key">$TikTokClientKey</string>
+```
+
+5. Add this provider to your AndroidManifest.xml:
+```xml
+<provider
+    android:name="androidx.core.content.FileProvider"
+    android:authorities="${applicationId}.tiktokopensdkfileprovider"
+    android:exported="false"
+    android:grantUriPermissions="true"
+    tools:replace="android:authorities">
+    <meta-data
+        android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/filepaths"
+        tools:replace="android:resource" />
+</provider>
+```
+
+6. Create a filepaths.xml file in your res/xml folder:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <cache-path name="cached_files" path="." />
+</paths>
 ```
 
 # Troubleshooting
@@ -175,3 +218,10 @@ MIT
 - [ ] Add support for login and authorization APIs
 - [ ] Send shareShate for error handling in iOS
 - [ ] Add support redirectUri for both platforms
+- [ ] Add custom client key for both platforms
+- [ ] Refactor API, pass client key, redirectUri, and callerScheme as last parameters
+- [ ] Add support remote media URLs
+- [ ] Handle photo library permissions in native side
+- [ ] Refactor whole android part
+- [ ] Check if tiktok app is installed
+- [ ] Remove isImage parameter and detect media type automatically

@@ -1,52 +1,158 @@
 import Foundation
 import TikTokOpenSDKCore
 import TikTokOpenShareSDK
+import Photos
 
 @objc(TiktokOpensdkReactNative)
 public class TiktokOpensdkReactNative: NSObject {
+    private static var pendingResolver: RCTPromiseResolveBlock?
+    private static var pendingRejecter: RCTPromiseRejectBlock?
+
+    @objc static func getRedirectURI() -> String? {
+        guard let redirectURI = Bundle.main.object(forInfoDictionaryKey: "TikTokClientKey") as? String else {
+            return nil
+        }
+        return "\(redirectURI)://"
+    }
     
-    @objc static func requiresMainQueueSetup() -> Bool {
+    @objc
+    static func requiresMainQueueSetup() -> Bool {
         return false
     }
     
-    @objc(share:mediaUrls:isImage:isGreenScreen:resolver:rejecter:)
-    func share(_ clientKey: String, mediaUrls: [String], isImage: Bool, isGreenScreen: Bool, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
-        let mediaType: TikTokShareMediaType = isImage ? .image : .video
+    @objc func share(_ mediaUrls: [String], isImage: Bool, isGreenScreen: Bool, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
+        NSLog("TikTok SDK: Share function called")
+        DispatchQueue.main.async {
+            self.downloadAndShareMedia(mediaUrls: mediaUrls, isImage: isImage, isGreenScreen: isGreenScreen, resolver: resolver, rejecter: rejecter)
+        }
+    }
+    
+    private func downloadAndShareMedia(mediaUrls: [String], isImage: Bool, isGreenScreen: Bool, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
+        NSLog("TikTok SDK: Preparing media for sharing")
+        let dispatchGroup = DispatchGroup()
+        var localIdentifiers: [String] = []
         
-        let shareRequest = TikTokShareRequest(localIdentifiers: mediaUrls, mediaType: mediaType, redirectURI: "your-redirect-uri-here")
-        
-        shareRequest.send { response in
-            guard let shareResponse = response as? TikTokShareResponse else {
-                rejecter("SHARE_ERROR", "Invalid response", nil)
-                return
+        for urlString in mediaUrls {
+            dispatchGroup.enter()
+            
+            guard let url = URL(string: urlString) else {
+                NSLog("TikTok SDK: Invalid media URL: \(urlString)")
+                dispatchGroup.leave()
+                continue
             }
             
-            if shareResponse.errorCode == .noError {
-                resolver(["isSuccess": true])
+            downloadMedia(from: url, isImage: isImage) { identifier in
+                if let identifier = identifier {
+                    localIdentifiers.append(identifier)
+                }
+                dispatchGroup.leave()
+            }
+        }
+        
+        dispatchGroup.notify(queue: .main) {
+            if localIdentifiers.isEmpty {
+                NSLog("TikTok SDK: No media saved successfully")
+                rejecter("SAVE_ERROR", "Failed to save media", nil)
+                return
+            }
+            self.performTikTokShare(localIdentifiers: localIdentifiers, isImage: isImage, isGreenScreen: isGreenScreen, resolver: resolver, rejecter: rejecter)
+        }
+    }
+    
+    private func downloadMedia(from url: URL, isImage: Bool, completion: @escaping (String?) -> Void) {
+        PHPhotoLibrary.shared().performChanges({
+            let assetCreationRequest = PHAssetCreationRequest.forAsset()
+            if isImage {
+                assetCreationRequest.addResource(with: .photo, fileURL: url, options: nil)
             } else {
-                resolver([
-                    "isSuccess": false,
-                    "errorCode": shareResponse.errorCode.rawValue,
-                    "errorMsg": shareResponse.errorDescription ?? "Unknown error",
-                    "shareState": shareResponse.shareState
-                ])
+                assetCreationRequest.addResource(with: .video, fileURL: url, options: nil)
+            }
+            if let identifier = assetCreationRequest.placeholderForCreatedAsset?.localIdentifier {
+                completion(identifier)
+            } else {
+                completion(nil)
+            }
+        }) { success, error in
+            if success {
+                NSLog("TikTok SDK: Media saved successfully")
+            } else {
+                NSLog("TikTok SDK: Error saving media: \(error?.localizedDescription ?? "Unknown error")")
+                completion(nil)
             }
         }
     }
-
-    @objc public static let TikTokURLHandler = TikTokURLHandlerWrapper()
-}
-
-
-@objc public class TikTokURLHandlerWrapper: NSObject {
-    @objc public func handleOpenURL(_ url: URL) -> Bool {
-        return TikTokOpenSDKCore.TikTokURLHandler.handleOpenURL(url)
-    }
     
-    @objc public func handleUserActivity(_ userActivity: NSUserActivity) -> Bool {
+    private func performTikTokShare(localIdentifiers: [String], isImage: Bool, isGreenScreen: Bool, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
+        NSLog("TikTok SDK: Performing TikTok share")
+        let mediaType: TikTokShareMediaType = isImage ? .image : .video
+
+        guard let redirectURI = TiktokOpensdkReactNative.getRedirectURI() else {
+            NSLog("TikTok SDK: Failed to get redirect URI")
+            rejecter("REDIRECT_URI_ERROR", "Failed to get redirect URI", nil)
+            return
+        }
+
+        NSLog("TikTok SDK: Redirect URI: \(redirectURI)")
+        
+        let shareRequest = TikTokShareRequest(localIdentifiers: localIdentifiers,
+                                              mediaType: mediaType,
+                                              redirectURI: redirectURI)
+        
+        if isGreenScreen {
+            shareRequest.shareFormat = TikTokShareFormatType.greenScreen
+        } else {
+            shareRequest.shareFormat = TikTokShareFormatType.normal
+        }
+
+        NSLog("TikTok SDK: Sending share request")
+        shareRequest.send(nil)
+        
+        TiktokOpensdkReactNative.pendingResolver = resolver
+        TiktokOpensdkReactNative.pendingRejecter = rejecter
+    }
+
+    @objc public static func handleOpenURL(_ url: URL) -> Bool {
+        NSLog("TikTok SDK: Handling open URL")
+        
+        guard let redirectURI = TiktokOpensdkReactNative.getRedirectURI() else {
+            NSLog("TikTok SDK: Failed to get redirect URI")
+            //TODO: We can't use pendingRejecter here as it's not accessible in a static context
+            return false
+        }
+
+        do {
+            let shareResponse = try TikTokShareResponse(fromURL: url, redirectURI: redirectURI)
+            
+            NSLog("TikTok SDK: Share response received - Error Code: \(shareResponse.errorCode.rawValue), Share State: \(shareResponse.shareState.rawValue)")
+            
+            if shareResponse.errorCode == .noError {
+                NSLog("TikTok SDK: Share succeeded")
+                pendingResolver?(["isSuccess": true])
+            } else {
+                NSLog("TikTok SDK: Share failed - \(shareResponse.errorDescription ?? "Unknown error")")
+                let errorInfo: [String: Any] = [
+                    "isSuccess": false,
+                    "errorCode": shareResponse.errorCode.rawValue,
+                    "errorMsg": shareResponse.errorDescription ?? "Unknown error",
+                    "shareState": shareResponse.shareState.rawValue
+                ]
+                pendingResolver?(errorInfo)
+            }
+        } catch {
+            NSLog("TikTok SDK: Error creating share response - \(error.localizedDescription)")
+            pendingRejecter?("SHARE_RESPONSE_ERROR", "Failed to create share response", error)
+        }
+        
+        pendingResolver = nil
+        pendingRejecter = nil
+        
+        return true
+    }
+
+    @objc public static func handleUserActivity(_ userActivity: NSUserActivity) -> Bool {
         if userActivity.activityType == NSUserActivityTypeBrowsingWeb,
            let url = userActivity.webpageURL {
-            return TikTokOpenSDKCore.TikTokURLHandler.handleOpenURL(url)
+            return handleOpenURL(url)
         }
         return false
     }

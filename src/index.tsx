@@ -17,40 +17,29 @@ const TiktokOpensdkReactNative = NativeModules.TiktokOpensdkReactNative
       }
     );
 
-interface ShareSuccessResult {
+type ShareSuccessResult = {
   isSuccess: true;
-}
+};
 
-interface ShareErrorResult {
+type ShareErrorResult = {
   isSuccess: false;
   errorCode: number;
   subErrorCode?: number;
   shareState?: number;
   errorMsg: string;
-}
+};
 
 type ShareResult = ShareSuccessResult | ShareErrorResult;
 
-interface TikTokOpenSDKType {
-  share: (
-    clientKey: string,
-    mediaUrls: string[],
-    isImage: boolean,
-    isGreenScreen: boolean
-  ) => Promise<ShareResult>;
-}
-
-const TikTokOpenSDK: TikTokOpenSDKType = {
+const TikTokOpenSDK = {
   share: async (
-    clientKey: string,
     mediaUrls: string[],
-    isImage: boolean,
-    isGreenScreen: boolean
+    isImage = false,
+    isGreenScreen = false
   ): Promise<ShareResult> => {
     try {
       if (Platform.OS === 'android') {
         const result = await TiktokOpensdkReactNative.share(
-          clientKey,
           mediaUrls,
           isImage,
           isGreenScreen
@@ -67,7 +56,6 @@ const TikTokOpenSDK: TikTokOpenSDKType = {
         }
       } else if (Platform.OS === 'ios') {
         const result = await TiktokOpensdkReactNative.share(
-          clientKey,
           mediaUrls,
           isImage,
           isGreenScreen

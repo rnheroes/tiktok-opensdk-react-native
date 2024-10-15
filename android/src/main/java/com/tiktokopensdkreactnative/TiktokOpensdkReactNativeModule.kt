@@ -26,6 +26,22 @@ class TiktokOpensdkReactNativeModule(reactContext: ReactApplicationContext) :
     // 30 seconds timeout
     private val SHARE_TIMEOUT = 30000L 
 
+    private val clientKey: String by lazy {
+        try {
+            val resourceId = reactApplicationContext.resources.getIdentifier("tiktok_client_key", "string", reactApplicationContext.packageName)
+            Log.d("TikTokSDK", "tiktok_client_key resource id: $resourceId")
+            if (resourceId != 0) {
+                reactApplicationContext.getString(resourceId)
+            } else {
+                Log.e("TikTokSDK", "tiktok_client_key resource not found")
+                "DEFAULT_CLIENT_KEY"
+            }
+        } catch (e: Exception) {
+            Log.e("TikTokSDK", "Error retrieving tiktok_client_key: ${e.message}")
+            "ERROR_RETRIEVING_KEY"
+        }
+    }
+
     init {
         Log.d("TikTokSDK", "TiktokOpensdkReactNativeModule initialized")
         reactContext.addActivityEventListener(this)
@@ -34,7 +50,7 @@ class TiktokOpensdkReactNativeModule(reactContext: ReactApplicationContext) :
     override fun getName(): String = "TiktokOpensdkReactNative"
 
     @ReactMethod
-    fun share(clientKey: String, mediaUrls: ReadableArray, isImage: Boolean, isGreenScreen: Boolean, promise: Promise) {
+    fun share(mediaUrls: ReadableArray, isImage: Boolean, isGreenScreen: Boolean, promise: Promise) {
         Log.d("TikTokSDK", "Share method called with clientKey: $clientKey, mediaUrls size: ${mediaUrls.size()}, isImage: $isImage, isGreenScreen: $isGreenScreen")
         
         val activity = currentActivity ?: run {

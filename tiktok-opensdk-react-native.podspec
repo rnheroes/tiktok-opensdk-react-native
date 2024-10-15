@@ -23,7 +23,7 @@ Pod::Spec.new do |s|
 
   s.dependency "React-Core"
   s.dependency "TikTokOpenSDKCore", "2.5.0"
-  s.dependency "TikTokOpenAuthSDK", "2.5.0"
+  # s.dependency "TikTokOpenAuthSDK", "2.5.0"
   s.dependency "TikTokOpenShareSDK", "2.5.0"
 
   if respond_to?(:install_modules_dependencies, true)
