@@ -180,7 +180,13 @@ dependencies {
 <string name="tiktok_client_key">$TikTokClientKey</string>
 ```
 
-5. Add this provider to your AndroidManifest.xml:
+5. Add metadata to your AndroidManifest.xml file:
+
+```xml
+<meta-data android:name="com.tiktokopensdkreactnative.tiktok.CLIENT_KEY" android:value="@string/tiktok_client_key" />
+```
+
+6. Add this provider to your AndroidManifest.xml:
 ```xml
 <provider
     android:name="androidx.core.content.FileProvider"
@@ -195,7 +201,7 @@ dependencies {
 </provider>
 ```
 
-6. Create a filepaths.xml file in your res/xml folder:
+7. Create a filepaths.xml file in your res/xml folder:
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>

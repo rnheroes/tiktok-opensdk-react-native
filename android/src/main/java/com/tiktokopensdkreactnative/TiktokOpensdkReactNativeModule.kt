@@ -28,17 +28,15 @@ class TiktokOpensdkReactNativeModule(reactContext: ReactApplicationContext) :
 
     private val clientKey: String by lazy {
         try {
-            val resourceId = reactApplicationContext.resources.getIdentifier("tiktok_client_key", "string", reactApplicationContext.packageName)
-            Log.d("TikTokSDK", "tiktok_client_key resource id: $resourceId")
-            if (resourceId != 0) {
-                reactApplicationContext.getString(resourceId)
-            } else {
-                Log.e("TikTokSDK", "tiktok_client_key resource not found")
-                "DEFAULT_CLIENT_KEY"
-            }
+            val ai = reactApplicationContext.packageManager.getApplicationInfo(
+                reactApplicationContext.packageName, 
+                PackageManager.GET_META_DATA
+            )
+            val value = ai.metaData.getString("com.tiktokopensdkreactnative.tiktok.CLIENT_KEY")
+            value ?: throw IllegalStateException("TikTok client key not found in AndroidManifest.xml")
         } catch (e: Exception) {
             Log.e("TikTokSDK", "Error retrieving tiktok_client_key: ${e.message}")
-            "ERROR_RETRIEVING_KEY"
+            throw IllegalStateException("Failed to retrieve TikTok client key", e)
         }
     }
 
