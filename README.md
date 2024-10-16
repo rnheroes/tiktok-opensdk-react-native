@@ -109,7 +109,7 @@ Minimum Xcode version: 10.0
 4. Update your AppDelegate.m
 
 ```objc
-#import <tiktok_opensdk_react_native/tiktok_opensdk_react_native-Swift.h>
+#import <TiktokOpensdkReactNative-Bridging-Header.h>
 
 @implementation AppDelegate
 
