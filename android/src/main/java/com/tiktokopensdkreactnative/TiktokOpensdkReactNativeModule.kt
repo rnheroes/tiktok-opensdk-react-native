@@ -8,6 +8,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.core.content.FileProvider
+import android.content.pm.PackageManager
 import java.io.File
 
 import com.tiktok.open.sdk.share.ShareApi
