@@ -151,8 +151,10 @@ Minimum Android version: API level 21 (Android 5.0 Lollipop) or later
 1. Add the TikTok SDK repository to your project-level build.gradle:
 
 ```gradle
-repositories {
-    maven { url "https://artifact.bytedance.com/repository/AwemeOpenSDK" }
+allprojects {
+    repositories {
+        maven { url "https://artifact.bytedance.com/repository/AwemeOpenSDK" }
+    }
 }
 ```
 
@@ -192,12 +194,10 @@ dependencies {
     android:name="androidx.core.content.FileProvider"
     android:authorities="${applicationId}.tiktokopensdkfileprovider"
     android:exported="false"
-    android:grantUriPermissions="true"
-    tools:replace="android:authorities">
+    android:grantUriPermissions="true">
     <meta-data
         android:name="android.support.FILE_PROVIDER_PATHS"
-        android:resource="@xml/filepaths"
-        tools:replace="android:resource" />
+        android:resource="@xml/filepaths" />
 </provider>
 ```
 
