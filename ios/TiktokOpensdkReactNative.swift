@@ -7,7 +7,8 @@ import Photos
 public class TiktokOpensdkReactNative: NSObject {
     private static var pendingResolver: RCTPromiseResolveBlock?
     private static var pendingRejecter: RCTPromiseRejectBlock?
-
+    private var downloadGroup: DispatchGroup?
+    
     @objc static func getRedirectURI() -> String? {
         guard let redirectURI = Bundle.main.object(forInfoDictionaryKey: "TikTokClientKey") as? String else {
             return nil
@@ -22,64 +23,100 @@ public class TiktokOpensdkReactNative: NSObject {
     
     @objc func share(_ mediaUrls: [String], isImage: Bool, isGreenScreen: Bool, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
         NSLog("TikTok SDK: Share function called")
-        DispatchQueue.main.async {
-            self.downloadAndShareMedia(mediaUrls: mediaUrls, isImage: isImage, isGreenScreen: isGreenScreen, resolver: resolver, rejecter: rejecter)
+        
+        // Ensure we're starting fresh
+        downloadGroup = DispatchGroup()
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.downloadAndShareMedia(mediaUrls: mediaUrls, isImage: isImage, isGreenScreen: isGreenScreen, resolver: resolver, rejecter: rejecter)
         }
     }
     
     private func downloadAndShareMedia(mediaUrls: [String], isImage: Bool, isGreenScreen: Bool, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
         NSLog("TikTok SDK: Preparing media for sharing")
-        let dispatchGroup = DispatchGroup()
+        guard let downloadGroup = downloadGroup else {
+            rejecter("INTERNAL_ERROR", "Download group not initialized", nil)
+            return
+        }
+        
         var localIdentifiers: [String] = []
+        let synchronizationQueue = DispatchQueue(label: "com.tiktok.sdk.sync")
         
         for urlString in mediaUrls {
-            dispatchGroup.enter()
+            downloadGroup.enter()
             
             guard let url = URL(string: urlString) else {
                 NSLog("TikTok SDK: Invalid media URL: \(urlString)")
-                dispatchGroup.leave()
+                downloadGroup.leave()
                 continue
             }
             
-            downloadMedia(from: url, isImage: isImage) { identifier in
-                if let identifier = identifier {
-                    localIdentifiers.append(identifier)
+            downloadMedia(from: url, isImage: isImage) { [weak self] identifier in
+                synchronizationQueue.async {
+                    if let identifier = identifier {
+                        localIdentifiers.append(identifier)
+                    }
+                    downloadGroup.leave()
                 }
-                dispatchGroup.leave()
             }
         }
         
-        dispatchGroup.notify(queue: .main) {
+        downloadGroup.notify(queue: .main) { [weak self] in
             if localIdentifiers.isEmpty {
                 NSLog("TikTok SDK: No media saved successfully")
                 rejecter("SAVE_ERROR", "Failed to save media", nil)
                 return
             }
-            self.performTikTokShare(localIdentifiers: localIdentifiers, isImage: isImage, isGreenScreen: isGreenScreen, resolver: resolver, rejecter: rejecter)
+            self?.performTikTokShare(localIdentifiers: localIdentifiers, isImage: isImage, isGreenScreen: isGreenScreen, resolver: resolver, rejecter: rejecter)
         }
     }
     
     private func downloadMedia(from url: URL, isImage: Bool, completion: @escaping (String?) -> Void) {
-        PHPhotoLibrary.shared().performChanges({
-            let assetCreationRequest = PHAssetCreationRequest.forAsset()
-            if isImage {
-                assetCreationRequest.addResource(with: .photo, fileURL: url, options: nil)
-            } else {
-                assetCreationRequest.addResource(with: .video, fileURL: url, options: nil)
-            }
-            if let identifier = assetCreationRequest.placeholderForCreatedAsset?.localIdentifier {
-                completion(identifier)
-            } else {
-                completion(nil)
-            }
-        }) { success, error in
-            if success {
-                NSLog("TikTok SDK: Media saved successfully")
-            } else {
-                NSLog("TikTok SDK: Error saving media: \(error?.localizedDescription ?? "Unknown error")")
-                completion(nil)
-            }
+        let fetchOptions = PHFetchOptions()
+        fetchOptions.predicate = NSPredicate(format: "mediaURL = %@", url as CVarArg)
+        
+        // First check if the asset already exists
+        let fetchResult = PHAsset.fetchAssets(with: fetchOptions)
+        if let existingAsset = fetchResult.firstObject {
+            completion(existingAsset.localIdentifier)
+            return
         }
+        
+        // If not found, download and save
+        URLSession.shared.downloadTask(with: url) { tempURL, response, error in
+            guard let tempURL = tempURL, error == nil else {
+                DispatchQueue.main.async {
+                    NSLog("TikTok SDK: Error downloading media: \(error?.localizedDescription ?? "Unknown error")")
+                    completion(nil)
+                }
+                return
+            }
+            
+            PHPhotoLibrary.shared().performChanges({
+                let assetCreationRequest = PHAssetCreationRequest.forAsset()
+                if isImage {
+                    assetCreationRequest.addResource(with: .photo, fileURL: tempURL, options: nil)
+                } else {
+                    assetCreationRequest.addResource(with: .video, fileURL: tempURL, options: nil)
+                }
+            }) { success, error in
+                DispatchQueue.main.async {
+                    if success {
+                        NSLog("TikTok SDK: Media saved successfully")
+                        // Fetch the saved asset's identifier
+                        let fetchResult = PHAsset.fetchAssets(with: fetchOptions)
+                        if let asset = fetchResult.firstObject {
+                            completion(asset.localIdentifier)
+                        } else {
+                            completion(nil)
+                        }
+                    } else {
+                        NSLog("TikTok SDK: Error saving media: \(error?.localizedDescription ?? "Unknown error")")
+                        completion(nil)
+                    }
+                }
+            }
+        }.resume()
     }
     
     private func performTikTokShare(localIdentifiers: [String], isImage: Bool, isGreenScreen: Bool, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
