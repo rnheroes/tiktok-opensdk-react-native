@@ -64,6 +64,8 @@ public class TiktokOpensdkReactNative: NSObject {
     }
     
     private func downloadMedia(from url: URL, isImage: Bool, completion: @escaping (String?) -> Void) {
+        var createdIdentifier: String?
+        
         PHPhotoLibrary.shared().performChanges({
             let assetCreationRequest = PHAssetCreationRequest.forAsset()
             if isImage {
@@ -72,16 +74,12 @@ public class TiktokOpensdkReactNative: NSObject {
                 assetCreationRequest.addResource(with: .video, fileURL: url, options: nil)
             }
             
-            return assetCreationRequest.placeholderForCreatedAsset?.localIdentifier
+            createdIdentifier = assetCreationRequest.placeholderForCreatedAsset?.localIdentifier
         }) { success, error in
             DispatchQueue.main.async {
                 if success {
                     NSLog("TikTok SDK: Media saved successfully")
-                    if let createdIdentifier = error as? String {
-                        completion(createdIdentifier)
-                    } else {
-                        completion(nil)
-                    }
+                    completion(createdIdentifier)
                 } else {
                     NSLog("TikTok SDK: Error saving media: \(error?.localizedDescription ?? "Unknown error")")
                     completion(nil)
